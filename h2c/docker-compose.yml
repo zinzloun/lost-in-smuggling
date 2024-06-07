@@ -1,0 +1,22 @@
+version: '3'
+services:
+    backend:
+        build:
+            context: .
+            dockerfile: ./configs/Dockerfile-backend
+        expose:
+            - 8000
+        ports:
+            - "8080:80"
+    nginx:
+        image: nginx:latest
+        expose:
+            - 443
+        ports:
+            - "8443:443"
+        volumes:
+            - ./configs/nginx.conf:/etc/nginx/conf.d/vhost.conf:ro
+            - ./configs/key.pem:/tmp/key.pem
+            - ./configs/cert.pem:/tmp/cert.pem
+        links:
+            - backend
