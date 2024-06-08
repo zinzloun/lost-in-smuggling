@@ -1,5 +1,5 @@
 # New smuggling adventures
-
+![smug](smug.jpg)
 ## Some theory
 HTTP/1.1 allows multiple requests in the same TCP socket, when a client is requesting multiple resources (Javascript, Images, Pages, Ajax requests), requests can follow each other in the same TCP socket. The outgoing stream would look like the code below.
 
