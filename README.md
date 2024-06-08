@@ -292,7 +292,70 @@ More information about upgrade websocket headers can be found [here](https://dev
 I encountered a very similar scenario in a real engagement. The DEV team forgot to uninstall t an endpoint used to check if a API service was active, based on the response (200 or 503) the routes to microservices were changed. The logic was implementend only during the test phase of the APP (alpha release) and it was not present in production release, but the endpoint used to perform the check was yet in place. They forgot to uninstall it. The endpoint of course was vulnerable to SSRF, exactly in the same way of the LAB.
 
 ## Request Smuggling Via HTTP/2 Cleartext (h2c)
-TODO
+This vulnerability has been discovered by BishopFox as explained in this great article [here](https://bishopfox.com/blog/h2c-smuggling-request).
+Follows I will recap the main concepts as taken by the previous article.
+
+### BACKGROUND: HTTP/1.1 UPGRADES AND PROXIES
+To understand this vulnerability, let’s review the behavior of the HTTP/1.1 upgrades and how upgrades are implemented by proxies.
+The Upgrade header is most often used to upgrade HTTP connections to long-lived WebSocket connections. Proxies support this behavior by keeping the original client connection alive and simply proxying the TCP traffic to the back-end server. At this point, the proxy is no longer content-aware and can no longer enforce access control rules.
+
+The process begins with the client initiating an HTTP/1.1 upgrade request. Once a successful a 101 “Switching Protocols” response is received, then the client reuses the connection and transmits data in accordance with the newly negotiated protocol, in this case h2c.
+After receiving the 101 response from the back-end web server, the proxy maintains a persistent TCP connection and no longer monitors the content.
+
+### THE H2C SPECIFICATION AND A RISKY OPPORTUNITY
+Typically, usage of the HTTP/2 protocol is negotiated over the TLS application-layer protocol negation extension (TLS-ALPN), however, HTTP/2 can also be initiated via an HTTP/1.1 Upgrade header, identified by the string "h2c" for cleartext communication. Follows an example request:
+
+    GET / HTTP/1.1
+    Host: www.example.com
+    Upgrade: h2c
+    HTTP2-Settings: AAMAAABkAARAAAAAAAIAAAAA
+    Connection: Upgrade, HTTP2-Settings
+    
+The HTTP2-Settings contains Base64 encoded HTTP/2 connection parameters. According to the specification, h2c upgrades are allowed only on cleartext connections and the HTTP2-Settings header should not be forwarded to the backend (see RFC 7540 Section 3.2.1).
+
+BishopFox create a script, <b>h2cSmuggler</b> to test and abuse the upgrade process, the steps inplemented in the tool's logic are:
+1. h2cSmuggler transmits an HTTP/1.1 upgrade request to the / endpoint on the reverse proxy.
+2. The proxy forwards the Upgrade and Connection headers to the backend, backend responds with "101 Switching Protocols" and prepares to receive HTTP2 communications.
+3. Upon receiving the 101 response from the backend, the proxy “upgrades” the connection to an unmanaged TCP tunnel (this is the very interesting fact)
+4. Upon receiving the 101 forwarded response from the proxy, h2cSmuggler reuses the existing connection and exchanges HTTP/2 initialization frames with the server. These include the server’s response for the endpoint requested in the HTTP/1.1 h2c upgrade (the / endpoint).
+5. Using HTTP/2 multiplexing, h2cSmuggler sends an additional request for the restricted resource, protected by the proxy ACL
+6. The proxy, which is no longer monitoring communications in the TCP tunnel, forwards the request to the back-end server
+7. The server responds with restricted resource content
+
+### LAB
+Since the Lab enviroment to test the tool is quite older and I had some problem to run the Docker container for the backend server, I decided to create my own Lab here. I did not forked the original repo since it seems to not been mantained anymore (pull requests hanging), plus, to keep the things simple, I decided to use only Ngnix as proxy. The backend server is exactly the same (GO app), I only added some more console log.
+#### Requirements
+- Docker
+- Docker compose
+- Python3 with h2c support
+My enviroments
+- OS Kali 2024.2
+- Server: Docker Engine - Community, Version: 26.1.4
+- Docker Compose version v2.27.1
+- Python 3.11.9 with h2 (4.1.0)
+
+#### LAB setup
+
+    pip3 install h2
+    git clone https://github.com/zinzloun/lost-in-smuggling.git
+    cd lost-in-smuggling/h2c 
+    chmod u+x configs/generate-certificates.sh && ./configs/generate-certificates.sh
+check certificates has been generated
+    
+    ls configs                      
+        cert.pem ...  key.pem  ...
+Run the containers (proxy and backend)
+
+    sudo docker compose up
+Grab a beer... :)
+
+#### Working in the lab
+Once the containers are started we should have the following:
+- Ngnix (proxy) on https://localhost:8443
+- Backend GO server on http://localhost:8080
+For the sake of learninf, of course, you should interact with the backend only through the proxy.
+
+
 
 
 
