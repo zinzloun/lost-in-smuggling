@@ -29,7 +29,7 @@ The problem is that not always this principle is applied.
 I used [these resources](https://gosecure.github.io/request-smuggling-workshop) as LAB enviroment
 
 ## HTTP/1.1 Content-Length Transfer-Encoding (CL.TE)
-In this we are going to exploit a proxy that use Content-Length, while the backe-end server is supporting Transfer-Encoding. Generally it implies the possibility to exploit a open redirect, but here the backend server is also vulnerable to reflected XSS.
+In this scenario we are going to exploit a proxy that use Content-Length, while the backe-end server is supporting Transfer-Encoding. Generally it implies the possibility to exploit a open redirect, but here the backend server is also vulnerable to reflected XSS.
 
     GET /contact.php?hey HTTP/1.1
 That is reflected into the response
