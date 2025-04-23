@@ -51,7 +51,7 @@ Before sending the request remember to disable Update content-lenght feature in 
 1. The request must be sent using POST since we need a body so we cannot use GET
 2. Content-length is set to the length of the payload, starting from 0 to the end of NOTEXIST string (a trick to find the value is to use Notepad++ and select the block, then have a look to Sel: <length> in the center bottom of the windows). In this case we could also send a bigger value, since we are only interested to cause an error
 
-What happens here? The proxy send the whole request (to the end of NOTEXIST), since the backend server use TE, when find 0 (end of trasmission) interpret the next string (NOTEXIST) as a new request, so an error is returned. Let's try now with a redirect to a local resource:
+What happens here? The proxy send the whole request (to the end of NOTEXIST), since the backend server use TE, when 0 is encountered (end of trasmission), the string NOTEXIST is treated as a new request, so an error is returned. Let's try now with a redirect to a local resource:
 
     POST / HTTP/1.1
     Host: localhost
