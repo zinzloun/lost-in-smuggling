@@ -18,7 +18,7 @@ HTTP/1.1 allows multiple requests in the same TCP socket, when a client is reque
 Since request is made up of a header section and a body section, the headers can have any length and are terminated by \r\n. The body section has variable length. In the previous outgoing stream, the server can determine the size of the body section using the Content-Length header.
 This point involves a confusion, this confusion appears when a proxy and a backend server do not agree on the size of each request. 
 
-In a typical scalable web infrastructure, a proxy will be placed in front of the backend. The proxy is forwarding a request to the backend with the intent to add functionality such as caching, firewall, or load balancing, it can happens that the proxy and the backend don't treat a request in the same way, especially regarding the interpret of the end of the request. The [RFC](https://datatracker.ietf.org/doc/html/rfc2616#section-4.4) explains how to face the case where both CL and TE are present:
+In a typical scalable web infrastructure, a proxy will be placed in front of the backend. The proxy is forwarding a request to the backend with the intent to add functionality such as caching, firewall, or load balancing, it can happens that the proxy and the backend don't treat a request in the same way, especially regarding the interpretation of the end of the request. The [RFC](https://datatracker.ietf.org/doc/html/rfc2616#section-4.4) explains how to face the case where both CL and TE are present:
 
      If a message is received with both a
      Transfer-Encoding header field and a Content-Length header field,
